@@ -1,0 +1,46 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Room {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  createdBy String?
+
+  owner        User?      @relation("RoomOwner", fields: [createdBy], references: [id])
+  participants RoomUser[]
+}
+
+model User {
+  id        String   @id @default(cuid())
+  username  String
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+
+  // One user can own many rooms
+  ownedRooms Room[]  @relation("RoomOwner")
+  
+  // Relation to RoomUser for participant entries
+  roomUsers RoomUser[]
+}
+
+model RoomUser {
+  id        String   @id @default(cuid())
+  roomId    String
+  userId    String?
+
+  joinedAt  DateTime @default(now())
+  lastSeen  DateTime @default(now()) @updatedAt
+
+  room      Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([roomId, userId])
+}

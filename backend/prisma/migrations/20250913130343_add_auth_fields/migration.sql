@@ -1,0 +1,20 @@
+/*
+  Warnings:
+
+  - A unique constraint covering the columns `[email]` on the table `User` will be added. If there are existing duplicate values, this will fail.
+  - Added the required column `email` to the `User` table without a default value. This is not possible if the table is not empty.
+  - Added the required column `password` to the `User` table without a default value. This is not possible if the table is not empty.
+
+*/
+-- AlterTable
+ALTER TABLE "public"."Room" ADD COLUMN     "createdBy" TEXT;
+
+-- AlterTable
+ALTER TABLE "public"."User" ADD COLUMN     "email" TEXT NOT NULL,
+ADD COLUMN     "password" TEXT NOT NULL;
+
+-- CreateIndex
+CREATE UNIQUE INDEX "User_email_key" ON "public"."User"("email");
+
+-- AddForeignKey
+ALTER TABLE "public"."Room" ADD CONSTRAINT "Room_createdBy_fkey" FOREIGN KEY ("createdBy") REFERENCES "public"."User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
