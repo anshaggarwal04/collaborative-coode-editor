@@ -1,3 +1,7 @@
+
+
+
+///Users/anshaggarwal/Desktop/project_2/backend/src/sockets/auth/socketAuth.js
 import jwt from "jsonwebtoken";
 
 const JWT_SECRET = process.env.JWT_SECRET || "supersecret";

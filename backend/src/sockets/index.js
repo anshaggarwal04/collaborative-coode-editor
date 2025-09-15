@@ -1,3 +1,5 @@
+///Users/anshaggarwal/Desktop/project_2/backend/src/sockets/index.js
+
 import { initRoomSocket } from "./room/roomSocket.js";
 import { initCodeSocket } from "./code/codeSocket.js";
 import { initHeartbeat } from "./heartbeat.js";

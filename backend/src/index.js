@@ -31,7 +31,7 @@ app.use("/api/compiler", compilerRoutes);
 
 // 🔹 Health check
 app.get("/api/health", (req, res) => {
-  res.json({ status: "ok", message: "Backend is running 🚀" });
+  res.json({ status: "ok", message: "Backend is running" });
 });
 
 // 🔹 Global error handler

@@ -19,16 +19,13 @@ model Room {
 
 model User {
   id        String   @id @default(cuid())
-  username  String
+  username  String   @unique   // make username unique
   email     String   @unique
   password  String
   createdAt DateTime @default(now())
 
-  // One user can own many rooms
   ownedRooms Room[]  @relation("RoomOwner")
-  
-  // Relation to RoomUser for participant entries
-  roomUsers RoomUser[]
+  roomUsers  RoomUser[]
 }
 
 model RoomUser {
