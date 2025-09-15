@@ -1,12 +1,19 @@
 import express from "express";
-import { createRoom, joinRoom } from "../controllers/roomController.js";
-import validate from "../middlewares/validate.js";
-import { createRoomSchema } from "../validation/roomValidation.js";
+import { createRoom, joinRoom, getAllRooms, getMyRooms } from "../controllers/roomController.js";
+import authMiddleware from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
-// ✅ RESTful & clean
-router.post("/", validate(createRoomSchema), createRoom);   // POST /api/rooms
-router.post("/join", joinRoom);                             // POST /api/rooms/join
+// Create a room
+router.post("/", authMiddleware, createRoom);
+
+// Join a room
+router.post("/join", authMiddleware, joinRoom);
+
+// Get all rooms
+router.get("/", getAllRooms);
+
+// Get my joined rooms
+router.get("/my", authMiddleware, getMyRooms);
 
 export default router;
