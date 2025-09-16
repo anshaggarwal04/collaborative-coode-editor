@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import api from "@/lib/axios";
 import toast from "react-hot-toast";
+import { useRouter } from "next/navigation";
+import { AxiosError } from "axios";
 
 interface Room {
   id: string;
@@ -12,98 +13,94 @@ interface Room {
   createdAt: string;
 }
 
+interface RoomsResponse {
+  rooms: Room[];
+}
+
+interface JoinRoomResponse {
+  room: Room;
+}
+
 export default function JoinRoomPage() {
-  const router = useRouter();
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(true);
-  const [joinRoomName, setJoinRoomName] = useState("");
-  const [joining, setJoining] = useState(false);
+  const [roomName, setRoomName] = useState("");
+  const router = useRouter();
 
   // Fetch rooms user already joined
-  const fetchMyRooms = async () => {
+  const fetchRooms = async () => {
     try {
-      const res = await api.get("/rooms/my");
+      const res = await api.get<RoomsResponse>("/rooms/my");
       setRooms(res.data.rooms || []);
     } catch (err) {
-      console.error(err);
-      toast.error("Failed to fetch your rooms");
+      const error = err as AxiosError<{ error?: string }>;
+      console.error(error);
+      toast.error(error.response?.data?.error || "Failed to load your rooms");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchMyRooms();
+    fetchRooms();
   }, []);
 
-  // Join by typing room name
   const handleJoinByName = async () => {
-    if (!joinRoomName.trim()) return toast.error("Enter a room name");
+    if (!roomName.trim()) return toast.error("Please enter a room name");
 
-    setJoining(true);
     try {
-      const res = await api.post("/rooms/join", { roomName: joinRoomName });
-      toast.success(`Joined room "${res.data.room.name}" 🎉`);
+      const res = await api.post<JoinRoomResponse>("/rooms/join", { roomName });
+      toast.success(`Joined room "${res.data.room.name}"`);
       router.push(`/rooms/${res.data.room.id}`);
-    } catch (err: any) {
-      console.error(err);
-      toast.error(err.response?.data?.error || "Failed to join room");
-    } finally {
-      setJoining(false);
+    } catch (err) {
+      const error = err as AxiosError<{ error?: string }>;
+      console.error(error);
+      toast.error(error.response?.data?.error || "Failed to join room");
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <span className="loading loading-spinner loading-lg text-primary"></span>
-      </div>
-    );
-  }
-
   return (
-    <div className="container mx-auto p-6 space-y-8">
-      <h1 className="text-3xl font-bold mb-4">Your Rooms</h1>
+    <div className="container mx-auto p-6">
+      <h1 className="text-3xl font-bold mb-6">Join a Room</h1>
 
-      {rooms.length === 0 ? (
-        <p className="text-center opacity-70">You haven’t joined any rooms yet 🚪</p>
+      {/* Join by typing room name */}
+      <div className="flex gap-2 mb-8">
+        <input
+          type="text"
+          placeholder="Enter room Id"
+          value={roomName}
+          onChange={(e) => setRoomName(e.target.value)}
+          className="input input-bordered w-full"
+        />
+        <button className="btn btn-primary" onClick={handleJoinByName}>
+          Join
+        </button>
+      </div>
+
+      {/* List of rooms user already joined */}
+      <h2 className="text-xl font-semibold mb-4">Your Rooms</h2>
+      {loading ? (
+        <p>Loading...</p>
+      ) : rooms.length === 0 ? (
+        <p className="opacity-70">You haven’t joined any rooms yet 🚪</p>
       ) : (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {rooms.map((room) => (
             <div
               key={room.id}
-              className="card bg-base-100 shadow-md p-4 cursor-pointer hover:shadow-lg transition"
+              className="card bg-base-200 shadow-md cursor-pointer hover:shadow-lg transition"
               onClick={() => router.push(`/rooms/${room.id}`)}
             >
-              <h3 className="text-lg font-semibold">{room.name}</h3>
-              <p className="text-sm opacity-70">
-                Created: {new Date(room.createdAt).toLocaleString()}
-              </p>
+              <div className="card-body">
+                <h3 className="font-bold">{room.name}</h3>
+                <p className="text-sm opacity-70">
+                  Created: {new Date(room.createdAt).toLocaleDateString()}
+                </p>
+              </div>
             </div>
           ))}
         </div>
       )}
-
-      {/* Join by typing room name */}
-      <div className="card bg-base-100 shadow-md p-6 max-w-md mx-auto">
-        <h2 className="text-xl font-semibold mb-4">Join by Room Name</h2>
-        <div className="flex gap-2">
-          <input
-            type="text"
-            placeholder="Enter room name"
-            value={joinRoomName}
-            onChange={(e) => setJoinRoomName(e.target.value)}
-            className="input input-bordered flex-1"
-          />
-          <button
-            onClick={handleJoinByName}
-            className="btn btn-primary"
-            disabled={joining}
-          >
-            {joining ? "Joining..." : "Join"}
-          </button>
-        </div>
-      </div>
     </div>
   );
 }

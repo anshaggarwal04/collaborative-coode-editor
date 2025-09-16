@@ -59,13 +59,25 @@ export async function handleLeaveRoom(io, socket, { roomName }) {
     });
 
     if (usersInRoom.length === 0) {
-      // 🔹 Delete empty room
-      await prisma.room.delete({ where: { id: room.id } });
-      console.log(`🗑️ Deleted empty room: ${room.name}`);
+      // Fetch room again to check creation time
+      const freshRoom = await prisma.room.findUnique({
+        where: { id: room.id },
+      });
+    
+      if (freshRoom) {
+        const roomAge = Date.now() - new Date(freshRoom.createdAt).getTime();
+        const FIVE_MINUTES = 5 * 60 * 1000;
+    
+        if (roomAge > FIVE_MINUTES) {
+          await prisma.room.delete({ where: { id: room.id } });
+          console.log(`🗑️ Deleted empty room: ${room.name}`);
+        } else {
+          console.log(`⏳ Room ${room.name} is empty but too new to delete.`);
+        }
+      }
     } else {
       io.to(roomName).emit("roomUsers", { room: roomName, users: usersInRoom });
     }
-
     socket.leave(roomName);
     console.log(`👤 ${socket.user.username} left ${roomName}`);
   } catch (err) {

@@ -3,18 +3,27 @@ import prisma from "../config/db.js";
 // ✅ Create Room
 export async function createRoom(req, res, next) {
   try {
-    const { name } = req.body;
+    const { roomName } = req.body;
 
+    // Create room
     const room = await prisma.room.create({
       data: {
-        name,
+        name: roomName,
         createdBy: req.user.id,
+      },
+    });
+
+    // ✅ Automatically add creator as participant
+    await prisma.roomUser.create({
+      data: {
+        userId: req.user.id,
+        roomId: room.id,
       },
     });
 
     return res.json({
       success: true,
-      message: `Room '${name}' created successfully`,
+      message: `Room '${roomName}' created successfully`,
       room,
     });
   } catch (err) {
@@ -27,11 +36,17 @@ export async function joinRoom(req, res, next) {
   try {
     const { roomId } = req.body;
 
-    const room = await prisma.room.findUnique({ where: { id: roomId } });
-    if (!room) {
-      return res.status(404).json({ success: false, error: "Room not found" });
+    if (!roomId) {
+      return res.status(400).json({ error: "roomId is required" });
     }
 
+    // Check if room exists
+    const room = await prisma.room.findUnique({ where: { id: roomId } });
+    if (!room) {
+      return res.status(404).json({ error: "Room not found" });
+    }
+
+    // Add entry to RoomUser (junction table)
     const roomUser = await prisma.roomUser.create({
       data: {
         userId: req.user.id,
@@ -40,8 +55,8 @@ export async function joinRoom(req, res, next) {
     });
 
     return res.json({
-      success: true,
       message: `Joined room '${room.name}' successfully`,
+      room,
       roomUser,
     });
   } catch (err) {
@@ -77,21 +92,26 @@ export async function getMyRooms(req, res, next) {
   }
 }
 
-// Get all rooms
-export async function getAllRooms(req, res, next) {
+
+
+// Get rooms current user has joined
+
+export async function getRoomById(req, res, next) {
   try {
-    const rooms = await prisma.room.findMany({
+    const { id } = req.params;
+    const room = await prisma.room.findUnique({
+      where: { id },
       include: {
         participants: {
           include: { user: true }
         }
       }
     });
-    res.json({ rooms });
+
+    if (!room) return res.status(404).json({ error: "Room not found" });
+
+    res.json({ room });
   } catch (err) {
     next(err);
   }
 }
-
-// Get rooms current user has joined
-

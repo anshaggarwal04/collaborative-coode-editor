@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import api from "@/lib/axios";
 import toast from "react-hot-toast";
+import { AxiosError } from "axios";
 
 interface RoomCardProps {
   id: string;
@@ -19,9 +20,10 @@ export default function RoomCard({ id, name, createdBy }: RoomCardProps) {
       await api.post("/rooms/join", { roomId: id });
       toast.success(`Joined room "${name}"`);
       router.push(`/rooms/${id}`); // ✅ Go inside room
-    } catch (err: any) {
-      console.error(err);
-      toast.error(err.response?.data?.error || "Failed to join room");
+    } catch (err) {
+      const error = err as AxiosError<{ error?: string }>;
+      console.error(error);
+      toast.error(error.response?.data?.error || "Failed to join room");
     }
   };
 

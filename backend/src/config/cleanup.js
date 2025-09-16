@@ -2,7 +2,7 @@
 import prisma from "../config/db.js";
 
 export function startCleanupJob(io) {
-  setInterval(async () => {
+  /*setInterval(async () => {
     try {
       const cutoff = new Date(Date.now() - 10000); // 10s ago
       const staleRoomUsers = await prisma.roomUser.findMany({
@@ -33,5 +33,5 @@ export function startCleanupJob(io) {
     } catch (err) {
       console.error("❌ Cleanup job error:", err);
     }
-  }, 10000);
-}
+  }, 10000); */
+} 

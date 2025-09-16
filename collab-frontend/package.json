@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
+    "@monaco-editor/react": "^4.7.0",
     "axios": "^1.12.2",
     "daisyui": "^4.12.24",
     "next": "15.5.3",

@@ -4,6 +4,7 @@
 import { useState } from "react";
 import api from "@/lib/axios";
 import toast from "react-hot-toast";
+import { AxiosError } from "axios";
 
 interface Props {
   onRoomCreated: () => void; // callback to refresh rooms
@@ -23,12 +24,13 @@ export default function CreateRoomModal({ onRoomCreated }: Props) {
       setNewRoom("");
       (document.getElementById("createRoomModal") as HTMLDialogElement).close();
       onRoomCreated();
-    } catch (err: any) {
-      console.error(err);
-      toast.error(err.response?.data?.error || "Failed to create room");
-    } finally {
-      setCreating(false);
-    }
+    } catch (err) {
+        const error = err as AxiosError<{ error?: string }>;
+        console.error(error);
+        toast.error(error.response?.data?.error || "Failed to create room");
+      } finally {
+        setCreating(false);
+      }
   };
 
   return (
