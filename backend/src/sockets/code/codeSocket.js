@@ -1,8 +1,8 @@
-///Users/anshaggarwal/Desktop/project_2/backend/src/sockets/code/codeSocket.js
-
-import { handleRunCode, handleCodeChange } from "./codeHandlers.js";
+// src/sockets/code/codeSocket.js
+import { handleCodeChange, handleRunCode } from "./codeHandlers.js";
 
 export function initCodeSocket(io, socket) {
-  socket.on("runCode", (data) => handleRunCode(io, socket, data));
-  socket.on("codeChange", (data) => handleCodeChange(io, socket, data));
+  // register code-related events
+  handleCodeChange(io, socket);
+  handleRunCode(io, socket);
 }
