@@ -36,7 +36,18 @@ export async function handleJoinRoom(io, socket, { roomId }) {
     socket.join(roomId);
     console.log(`👥 ${username} joined ${room.name}`);
 
-    // 4. Broadcast updated active users in this room
+    // 4. Fetch **latest codeChange event**
+    const lastCode = await prisma.roomHistory.findFirst({
+      where: { roomId, event: "codeChange" },
+      orderBy: { timestamp: "desc" },
+    });
+
+    if (lastCode) {
+      // Send last saved code only to this user
+      socket.emit("codeUpdate", lastCode.payload);
+    }
+
+    // 5. Broadcast updated active users in this room
     const usersInRoom = await prisma.roomUser.findMany({
       where: { roomId, isActive: true },
       include: { user: { select: { id: true, username: true } } },
@@ -44,10 +55,10 @@ export async function handleJoinRoom(io, socket, { roomId }) {
 
     io.to(roomId).emit("roomUsers", {
       room,
-      users: usersInRoom.map(u => u.user),
+      users: usersInRoom.map((u) => u.user),
     });
 
-    // 5. Confirm to this socket
+    // 6. Confirm to this socket
     socket.emit("joinedRoom", { room, userId });
   } catch (err) {
     console.error("Join room error details:", err);
@@ -78,7 +89,7 @@ export async function handleLeaveRoom(io, socket, { roomId }) {
     } else {
       io.to(roomId).emit("roomUsers", {
         roomId,
-        users: usersInRoom.map(u => u.user),
+        users: usersInRoom.map((u) => u.user),
       });
     }
 
