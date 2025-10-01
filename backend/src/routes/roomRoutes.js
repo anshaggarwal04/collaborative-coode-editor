@@ -1,5 +1,5 @@
 import express from "express";
-import { createRoom, joinRoom, getMyRooms,getRoomById } from "../controllers/roomController.js";
+import { createRoom, joinRoom, getMyRooms,getRoomById,leaveRoom } from "../controllers/roomController.js";
 import authMiddleware from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
@@ -15,7 +15,10 @@ router.post("/join", authMiddleware, joinRoom);
 router.get("/my", authMiddleware, getMyRooms);
 
 // new route
-router.get("/:id",authMiddleware, getRoomById); 
+router.get("/:id",authMiddleware, getRoomById);
+
+// Leave a room
+router.post("/leave", authMiddleware, leaveRoom);
 
 
 export default router;

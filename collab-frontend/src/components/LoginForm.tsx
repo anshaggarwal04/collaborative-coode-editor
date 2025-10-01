@@ -3,42 +3,38 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import api from "@/lib/axios";
-import axios from "axios";
-import toast from "react-hot-toast";
 import { useAuthContext } from "@/context/AuthContext";
+import toast from "react-hot-toast";
+import axios from "axios";
 
 export default function LoginForm() {
-  const router = useRouter();
   const { login } = useAuthContext();
+  const router = useRouter();
+
+  const [identifier, setIdentifier] = useState(""); // ✅ username OR email
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState({ identifier: "", password: "" });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const payload = form.identifier.includes("@")
-        ? { email: form.identifier, password: form.password }
-        : { username: form.identifier, password: form.password };
+      // ✅ Detect whether it's email or username
+      const payload = identifier.includes("@")
+        ? { email: identifier, password }
+        : { username: identifier, password };
 
       const res = await api.post("/auth/login", payload);
-      const data = res.data;
 
-      login(data.token, data.user); // ✅ update context + localStorage
-      toast.success(`Welcome back, ${data.user.username}!`);
+      // Save user + token into context
+      login(res.data.token, res.data.user);
+
+      toast.success(`Welcome back, ${res.data.user.username}! 👋`);
       router.push("/dashboard");
     } catch (err: unknown) {
       if (axios.isAxiosError(err)) {
-        const errorMessage =
-          err.response?.data?.error ||
-          err.response?.data?.message ||
-          "Login failed";
-        toast.error(errorMessage);
+        toast.error(err.response?.data?.error || "Login failed");
       } else {
         toast.error("Unexpected error");
       }
@@ -49,38 +45,44 @@ export default function LoginForm() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-base-200">
-      <div className="card w-full max-w-md shadow-xl bg-base-100">
-        <div className="card-body">
-          <h2 className="text-2xl font-bold text-center">Login</h2>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <input
-              type="text"
-              name="identifier"
-              placeholder="Email or Username"
-              value={form.identifier}
-              onChange={handleChange}
-              className="input input-bordered w-full"
-              required
-            />
-            <input
-              type="password"
-              name="password"
-              placeholder="Password"
-              value={form.password}
-              onChange={handleChange}
-              className="input input-bordered w-full"
-              required
-            />
-            <button
-              type="submit"
-              className="btn btn-primary w-full"
-              disabled={loading}
-            >
-              {loading ? "Logging in..." : "Login"}
-            </button>
-          </form>
-        </div>
-      </div>
+      <form
+        onSubmit={handleLogin}
+        className="bg-base-100 p-6 rounded-xl shadow-lg w-full max-w-md"
+      >
+        <h1 className="text-2xl font-bold mb-6 text-center">Login</h1>
+
+        <input
+          type="text"
+          placeholder="Email or Username"
+          value={identifier}
+          onChange={(e) => setIdentifier(e.target.value)}
+          className="input input-bordered w-full mb-4"
+          required
+        />
+
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="input input-bordered w-full mb-6"
+          required
+        />
+
+        <button
+          type="submit"
+          className="btn btn-primary w-full"
+          disabled={loading}
+        >
+          {loading ? "Logging in..." : "Login"}
+        </button>
+        <p className="text-sm text-center mt-4">
+          Don’t have an account?{" "}
+          <a href="/auth/register" className="link link-primary">
+          Register
+          </a>
+        </p>
+      </form>
     </div>
   );
 }

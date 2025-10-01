@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL, // ✅ points to backend
+  baseURL: process.env.NEXT_PUBLIC_API_URL ||"http://localhost:5010/api",// ✅ points to backend
   withCredentials: false,
 });
 

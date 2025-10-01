@@ -5,7 +5,7 @@ import { registerSchema, loginSchema } from "../validation/authValidation.js";
 
 const router = express.Router();
 
-// 🚫 Do NOT put authMiddleware here
+
 router.post("/register", validate(registerSchema), register);
 router.post("/login", validate(loginSchema), login);
 

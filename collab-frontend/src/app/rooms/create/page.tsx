@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import api from "@/lib/axios";
-import {AxiosError} from "axios";
+import { AxiosError } from "axios";
 
 export default function CreateRoomPage() {
   const router = useRouter();
@@ -13,22 +13,22 @@ export default function CreateRoomPage() {
 
   const handleCreateRoom = async () => {
     if (!roomName.trim()) return toast.error("Room name is required");
-
+  
     setCreating(true);
     try {
-      const res = await api.post("/rooms", { roomName });
+      const res = await api.post("/rooms/create", { roomName });  // ✅ fixed
       toast.success(`Room "${res.data.room.name}" created!`);
       setRoomName("");
-
+  
       // redirect user directly to the created room
-      router.push(`/room/${res.data.room.id}`);
+      router.push(`/rooms/${res.data.room.id}`);
     } catch (err) {
-        const error = err as AxiosError<{ error?: string }>;
-        console.error(error);
-        toast.error(error.response?.data?.error || "Failed to create room");
-      } finally {
-        setCreating(false);
-      }
+      const error = err as AxiosError<{ error?: string }>;
+      console.error(error);
+      toast.error(error.response?.data?.error || "Failed to create room");
+    } finally {
+      setCreating(false);
+    }
   };
 
   return (
@@ -48,7 +48,11 @@ export default function CreateRoomPage() {
           />
 
           <div className="flex justify-end gap-3">
-            <button className="btn" onClick={() => router.push("/dashboard")}>
+            <button
+              className="btn"
+              onClick={() => router.push("/dashboard")}
+              disabled={creating}
+            >
               Cancel
             </button>
             <button

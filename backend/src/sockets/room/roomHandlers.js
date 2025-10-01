@@ -1,86 +1,92 @@
 import prisma from "../../config/db.js";
 
-export async function handleJoinRoom(io, socket, { roomName }) {
+// ✅ Join room
+export async function handleJoinRoom(io, socket, { roomId }) {
   try {
-    const username = socket.user.username;
-    const userId = socket.user.id;
+    const { id: userId, username } = socket.user;
 
-    console.log(`👤 ${username} attempting to join ${roomName}`);
+    console.log(`${username} attempting to join room ${roomId}`);
 
-    let room = await prisma.room.findUnique({ where: { name: roomName } });
+    // 1. Check if room exists
+    const room = await prisma.room.findUnique({ where: { id: roomId } });
     if (!room) {
-      room = await prisma.room.create({ data: { name: roomName } });
-    }
-
-    const existingUser = await prisma.user.findFirst({
-      where: { id: userId, roomId: room.id },
-    });
-    if (existingUser) {
-      socket.emit("error", { message: "Already in this room" });
+      socket.emit("error", { message: "Room not found" });
       return;
     }
 
-    await prisma.user.update({
-      where: { id: userId },
-      data: { roomId: room.id },
+    // 2. Check if RoomUser record exists
+    const existing = await prisma.roomUser.findUnique({
+      where: { roomId_userId: { roomId, userId } },
     });
 
-    socket.join(roomName);
-    console.log(`👥 ${username} joined ${roomName}`);
+    if (existing) {
+      // Reactivate if previously inactive
+      await prisma.roomUser.update({
+        where: { roomId_userId: { roomId, userId } },
+        data: { isActive: true, leftAt: null, lastSeen: new Date() },
+      });
+    } else {
+      // First-time join
+      await prisma.roomUser.create({
+        data: { userId, roomId, isActive: true },
+      });
+    }
 
-    const usersInRoom = await prisma.user.findMany({
-      where: { roomId: room.id },
-      select: { id: true, username: true },
+    // 3. Add user to socket.io room
+    socket.join(roomId);
+    console.log(`👥 ${username} joined ${room.name}`);
+
+    // 4. Broadcast updated active users in this room
+    const usersInRoom = await prisma.roomUser.findMany({
+      where: { roomId, isActive: true },
+      include: { user: { select: { id: true, username: true } } },
     });
 
-    io.to(roomName).emit("roomUsers", { room: roomName, users: usersInRoom });
+    io.to(roomId).emit("roomUsers", {
+      room,
+      users: usersInRoom.map(u => u.user),
+    });
+
+    // 5. Confirm to this socket
     socket.emit("joinedRoom", { room, userId });
   } catch (err) {
-    console.error("❌ Join room error:", err);
-    socket.emit("error", { message: "Failed to join room" });
+    console.error("Join room error details:", err);
+    socket.emit("error", { message: err.message || "Failed to join room" });
   }
 }
 
-export async function handleLeaveRoom(io, socket, { roomName }) {
+// ✅ Leave room
+export async function handleLeaveRoom(io, socket, { roomId }) {
   try {
-    const userId = socket.user.id;
+    const { id: userId, username } = socket.user;
 
-    await prisma.user.update({
-      where: { id: userId },
-      data: { roomId: null },
+    // 1. Mark inactive instead of deleting
+    await prisma.roomUser.update({
+      where: { roomId_userId: { roomId, userId } },
+      data: { isActive: false, leftAt: new Date() },
     });
 
-    const room = await prisma.room.findUnique({ where: { name: roomName } });
-    if (!room) return;
-
-    const usersInRoom = await prisma.user.findMany({
-      where: { roomId: room.id },
-      select: { id: true, username: true },
+    // 2. Fetch remaining active users
+    const usersInRoom = await prisma.roomUser.findMany({
+      where: { roomId, isActive: true },
+      include: { user: { select: { id: true, username: true } } },
     });
 
     if (usersInRoom.length === 0) {
-      // Fetch room again to check creation time
-      const freshRoom = await prisma.room.findUnique({
-        where: { id: room.id },
-      });
-    
-      if (freshRoom) {
-        const roomAge = Date.now() - new Date(freshRoom.createdAt).getTime();
-        const FIVE_MINUTES = 5 * 60 * 1000;
-    
-        if (roomAge > FIVE_MINUTES) {
-          await prisma.room.delete({ where: { id: room.id } });
-          console.log(`🗑️ Deleted empty room: ${room.name}`);
-        } else {
-          console.log(`⏳ Room ${room.name} is empty but too new to delete.`);
-        }
-      }
+      console.log(`Room ${roomId} is now empty`);
+      // Optional: cleanup logic if no one is left
     } else {
-      io.to(roomName).emit("roomUsers", { room: roomName, users: usersInRoom });
+      io.to(roomId).emit("roomUsers", {
+        roomId,
+        users: usersInRoom.map(u => u.user),
+      });
     }
-    socket.leave(roomName);
-    console.log(`👤 ${socket.user.username} left ${roomName}`);
+
+    // 3. Leave socket.io room
+    socket.leave(roomId);
+    console.log(`${username} left room ${roomId}`);
   } catch (err) {
-    console.error("❌ Leave room error:", err);
+    console.error("Leave room error:", err);
+    socket.emit("error", { message: "Failed to leave room" });
   }
 }
