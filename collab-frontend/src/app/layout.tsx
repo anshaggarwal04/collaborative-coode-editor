@@ -8,10 +8,14 @@ const inter = Inter({ subsets: ["latin"] });
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" data-theme="dark">
-      <body className={inter.className}>
+      <body className={`${inter.className} h-screen w-screen overflow-hidden`}>
         <AuthProvider>
-          <Navbar />
-          <main className="p-6 container mx-auto">{children}</main>
+          <div className="flex flex-col h-full w-full">
+            <Navbar />
+            <main className="flex-1 w-full h-full overflow-auto">
+              {children}
+            </main>
+          </div>
         </AuthProvider>
       </body>
     </html>
