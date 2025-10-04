@@ -2,7 +2,9 @@
 
 import { io, Socket } from "socket.io-client";
 
-// Minimal shape for Judge0 result payloads your server emits
+// ---------------- Types ----------------
+
+// Minimal shape for Judge0 result payloads
 export type CodeResult = {
   stdout: string | null;
   time: string | null;
@@ -12,19 +14,21 @@ export type CodeResult = {
   status?: { id: number; description: string } | null;
 };
 
-// Server -> Client events
-interface ServerToClientEvents {
+// Events server can send → client
+export interface ServerToClientEvents {
   roomUsers: (data: { room: string; users: { id: string; username: string }[] }) => void;
   joinedRoom: (data: { room: any; userId: string }) => void;
   codeUpdate: (code: string) => void;
-  codeResult: (result: any) => void;
+  codeResult: (result: CodeResult) => void;
   error: (data: { message: string }) => void;
-
-  // ✅ Add this so TS knows about roomHistory
   roomHistory: (history: Array<{ event: string; payload?: string }>) => void;
+
+  // 🆕 when an existing user should send latest code to a newcomer
+  requestLatestCode: (data: { newUserId: string }) => void;
 }
-// Client -> Server events
-interface ClientToServerEvents {
+
+// Events client can send → server
+export interface ClientToServerEvents {
   joinRoom: (data: { roomId: string }) => void;
   leaveRoom: (data: { roomId: string }) => void;
 
@@ -39,7 +43,12 @@ interface ClientToServerEvents {
   }) => void;
 
   heartbeat: (userId: string) => void;
+
+  // 🆕 emit when an existing user sends latest code back
+  requestLatestCode: (data: { newUserId: string }) => void;
 }
+
+// ---------------- Socket Helpers ----------------
 
 let socket: Socket<ServerToClientEvents, ClientToServerEvents> | null = null;
 
@@ -51,7 +60,7 @@ export function initSocket(token: string) {
     });
 
     socket.on("connect", () => {
-      console.log("Socket connected:", socket?.id);
+      console.log("✅ Socket connected:", socket?.id);
     });
 
     socket.on("disconnect", (reason) => {
@@ -59,11 +68,11 @@ export function initSocket(token: string) {
     });
 
     socket.on("connect_error", (err) => {
-      console.error("Socket connection failed:", err.message);
+      console.error("❌ Socket connection failed:", err.message);
     });
 
     socket.on("error", (err) => {
-      console.error("Socket error (server-side):", err?.message || err);
+      console.error("❌ Socket error (server-side):", err?.message || err);
     });
   }
   return socket;
