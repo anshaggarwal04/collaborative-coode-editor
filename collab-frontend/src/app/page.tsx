@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthContext } from "@/context/AuthContext";
+import InteractiveGlow from "@/components/InteractiveGlow";
 
 export default function HomePage() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -15,108 +16,127 @@ export default function HomePage() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
-    const keywords = [
-      "function", "const", "return", "if", "else",
-      "while", "for", "true", "false", "null",
-      "=>", "{ }", "import", "export", "class"
+    const snippets = [
+      "function init() {",
+      "const user = login();",
+      "if(res.ok){ return data; }",
+      "console.log('Connected');",
+      "for(let i=0;i<lines;i++){",
+      "def main():",
+      "class Solution:",
+      "public static void main()",
+      "try { fetch('/api'); }",
     ];
-    const fontSize = 18;
-    let columns = Math.floor(canvas.width / fontSize);
-    let drops: number[] = Array(columns).fill(1);
 
-    const colors = ["#7b2ff7", "#38bdf8", "#f472b6", "#a3e635", "#facc15"];
+    const colors = [
+      "rgba(0, 255, 198,", // cyan
+      "rgba(255, 196, 107,", // amber
+      "rgba(200, 200, 255,", // pale white-blue
+      "rgba(180, 255, 220,", // mint tint
+    ];
 
-    // Track cursor position
-    const cursor = { x: -100, y: -100 };
+    const cursor = { x: -999, y: -999 };
     window.addEventListener("mousemove", (e) => {
       cursor.x = e.clientX;
       cursor.y = e.clientY;
     });
 
+    const makeLayer = (count: number, depth: number) =>
+      Array.from({ length: count }).map(() => ({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        text: snippets[Math.floor(Math.random() * snippets.length)],
+        color: colors[Math.floor(Math.random() * colors.length)],
+        speed: (0.04 + Math.random() * 0.15) * depth, // ⏬ slowed down
+        blur: depth === 0.5 ? 3 : depth === 1 ? 1.5 : 0,
+      }));
+
+    const layers = [
+      makeLayer(Math.floor(canvas.width * 0.05), 0.5),
+      makeLayer(Math.floor(canvas.width * 0.08), 1),
+      makeLayer(Math.floor(canvas.width * 0.04), 2),
+    ];
+
     const draw = () => {
-      ctx.fillStyle = "rgba(15, 23, 42, 0.25)"; // background trail
+      ctx.fillStyle = "rgba(12,15,20,0.25)";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.font = "15px 'JetBrains Mono', monospace";
+      ctx.textBaseline = "top";
 
-      ctx.font = `${fontSize}px monospace`;
+      layers.forEach((layer) => {
+        for (const snip of layer) {
+          const dist = Math.hypot(cursor.x - snip.x, cursor.y - snip.y);
+          const glow = Math.max(0, 1 - dist / 250);
+          const alpha = 0.06 + glow * 0.4;
+          ctx.fillStyle = `${snip.color}${alpha})`;
+          ctx.shadowBlur = snip.blur;
+          ctx.shadowColor = `${snip.color}0.3)`;
+          ctx.fillText(snip.text, snip.x, snip.y);
 
-      drops.forEach((y, i) => {
-        const text = keywords[Math.floor(Math.random() * keywords.length)];
-        const color = colors[Math.floor(Math.random() * colors.length)];
-
-        const posX = i * fontSize;
-        const posY = y * fontSize;
-
-        // Default color
-        ctx.fillStyle = color;
-
-        // Stop effect near cursor (±2 columns around cursor)
-        if (Math.abs(cursor.x - posX) < fontSize * 2 && cursor.y < posY) {
-          // Don't move this column
-          ctx.fillStyle = "rgba(255,255,255,0.8)"; // highlight it
-          ctx.fillText(text, posX, posY); 
-          return; // skip increment
+          snip.y += snip.speed;
+          if (snip.y > canvas.height) {
+            snip.y = -20;
+            snip.x = Math.random() * canvas.width;
+          }
         }
-
-        ctx.fillText(text, posX, posY);
-
-        // Reset drops randomly
-        if (posY > canvas.height && Math.random() > 0.975) {
-          drops[i] = 0;
-        }
-        drops[i]++;
       });
     };
 
-    const interval = setInterval(draw, 50);
+    const animate = () => {
+      draw();
+      requestAnimationFrame(animate);
+    };
+    animate();
 
-    const handleResize = () => {
+    const resize = () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
-      columns = Math.floor(canvas.width / fontSize);
-      drops = Array(columns).fill(1);
     };
-    window.addEventListener("resize", handleResize);
+    window.addEventListener("resize", resize);
 
-    return () => {
-      clearInterval(interval);
-      window.removeEventListener("resize", handleResize);
-    };
+    return () => window.removeEventListener("resize", resize);
   }, []);
 
   const goJoin = () => (user ? router.push("/rooms/join") : router.push("/auth/login"));
   const goStarted = () => (user ? router.push("/dashboard") : router.push("/auth/login"));
 
   return (
-    <div className="relative h-screen w-screen overflow-hidden bg-gradient-to-br from-[#0f172a] via-[#111827] to-[#1e293b] text-white">
-      {/* Background Canvas */}
+    <div className="relative h-screen w-screen overflow-hidden bg-[#0b0d10] text-white select-none">
+      {/* ✨ Matching soft glow from Dashboard */}
+      <InteractiveGlow color="amber" intensity={0.08} size={700} />
+
+      {/* Code Rain Canvas */}
       <canvas ref={canvasRef} className="absolute inset-0 z-0" />
 
-      {/* Hero Section */}
-      <div className="relative z-10 flex flex-col items-center justify-center h-full text-center px-6 bg-gradient-to-t from-black/50 via-black/20 to-transparent">
-        <h1 className="text-6xl md:text-7xl font-extrabold bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-500 bg-clip-text text-transparent drop-shadow-[0_0_15px_rgba(139,92,246,0.7)]">
+      {/* Content */}
+      <div className="absolute inset-0 flex flex-col items-center justify-center text-center z-10 px-6">
+        <h1 className="text-7xl md:text-8xl font-extrabold tracking-tight mb-5 text-[#00ffc6] drop-shadow-[0_0_25px_rgba(0,255,198,0.25)]">
           CollabEditor
         </h1>
-        <p className="mt-4 max-w-2xl text-lg text-gray-300">
-          Real-time collaborative code editor — futuristic, fast, beautiful.
+
+        <p className="text-gray-400 text-lg max-w-xl mx-auto mb-10">
+          Real-time collaborative coding — immersive, minimal, and made for developers.
         </p>
 
-        <div className="mt-8 flex space-x-4">
+        <div className="flex gap-4">
           <button
             onClick={goJoin}
-            className="px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold shadow-lg hover:scale-105 transition transform"
+            className="px-6 py-3 rounded-lg bg-[#181c23] hover:bg-[#222833] text-white 
+                       font-semibold border border-gray-700 transition-transform hover:scale-105"
           >
             🚀 Join a Room
           </button>
           <button
             onClick={goStarted}
-            className="px-6 py-3 rounded-xl border border-gray-600 text-gray-300 font-semibold backdrop-blur hover:bg-gray-800 transition"
+            className="px-6 py-3 rounded-lg border border-gray-600 text-gray-300 
+                       hover:bg-gray-800/40 transition-transform hover:scale-105"
           >
             Get Started
           </button>
         </div>
 
         <p className="mt-10 text-xs text-gray-500">
-          Built for developers, teams, and creators ✨
+          Designed for engineers who love clarity and collaboration ✨
         </p>
       </div>
     </div>
