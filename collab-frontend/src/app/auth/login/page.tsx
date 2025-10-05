@@ -2,94 +2,94 @@
 
 import { useAuthContext } from "@/context/AuthContext";
 import LoginForm from "@/components/LoginForm";
+import InteractiveGlow from "@/components/InteractiveGlow";
 import { motion } from "framer-motion";
+import Link from "next/link";
 
 export default function LoginPage() {
   const { isAuthenticated } = useAuthContext();
 
   if (isAuthenticated) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[#0f172a] via-[#111827] to-[#1e293b] text-white">
+      <div className="flex min-h-screen items-center justify-center bg-[#0b0c0f] text-white">
         <motion.p
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
           className="text-lg font-medium"
         >
-          ✅ Already logged in — Redirecting...
+          ✅ You’re already logged in — redirecting...
         </motion.p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex overflow-hidden">
-      {/* 🔹 Left Panel: Branding / Background */}
-      <div className="hidden lg:flex flex-col justify-center items-center w-1/2 relative text-white">
-        {/* Animated Gradient Background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-indigo-600 via-purple-700 to-pink-600 animate-gradient-xy" />
-        
-        {/* Particle Overlay (faux code rain dots) */}
-        <div className="absolute inset-0 opacity-30 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.3),transparent_70%)] animate-pulse" />
+    <div className="relative flex min-h-screen items-center justify-center bg-[#0b0c0f] overflow-hidden text-white">
+      <InteractiveGlow color="sky" intensity={0.18} />
 
-        {/* Branding Content */}
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="relative z-10 text-center px-8"
-        >
-          <h1 className="text-6xl font-extrabold tracking-tight drop-shadow-xl">
-            Collab<span className="text-pink-300">Editor</span>
-          </h1>
-          <p className="mt-6 text-lg text-white/80 max-w-md mx-auto">
-            A futuristic collaborative code editor — built for developers, powered by teamwork 🚀
-          </p>
-        </motion.div>
-      </div>
-
-      {/* 🔹 Right Panel: Login Form */}
-      <div className="flex flex-col justify-center items-center w-full lg:w-1/2 px-8 py-12 bg-[#0f172a] relative">
-        {/* Glow Backdrop */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_30%,rgba(139,92,246,0.2),transparent)]" />
-
-        <div className="w-full max-w-md relative z-10">
-          {/* Header */}
-          <motion.h2
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="text-4xl font-bold mb-6 text-center bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-500 bg-clip-text text-transparent"
-          >
-            Welcome Back 👋
-          </motion.h2>
-
-          {/* Login Form */}
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.9, ease: "easeOut" }}
+        className="relative flex flex-col lg:flex-row items-center justify-between 
+                   w-[90%] lg:w-[75%] max-w-6xl mx-auto
+                   rounded-3xl border border-white/10 backdrop-blur-2xl bg-white/[0.03]
+                   shadow-[0_0_80px_rgba(255,255,255,0.05)] overflow-hidden"
+      >
+        {/* Branding */}
+        <div className="flex-1 flex flex-col justify-center text-center lg:text-left px-16 py-20">
           <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.3, duration: 0.5 }}
-            className="rounded-2xl bg-[#111827]/80 backdrop-blur-xl border border-gray-700/50 shadow-2xl p-8"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.9 }}
+            className="relative z-10 max-w-md mx-auto lg:mx-0"
           >
-            <LoginForm />
+            <div className="inline-block rounded-2xl bg-white/[0.04] backdrop-blur-md 
+                            border border-white/10 px-10 py-8 shadow-[0_0_60px_rgba(100,150,255,0.08)] 
+                            hover:shadow-[0_0_80px_rgba(150,200,255,0.15)] transition-shadow duration-700">
+              <h1 className="text-6xl font-extrabold tracking-tight mb-4 leading-tight">
+                <span className="text-white">Collab</span>
+                <span className="text-sky-400">Editor</span>
+              </h1>
+              <p className="text-white/70 text-base leading-relaxed">
+                Reimagine collaboration. Code with clarity, create beautifully, and
+                work in perfect flow.
+              </p>
+            </div>
           </motion.div>
-
-          {/* Footer Link */}
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.7 }}
-            className="mt-6 text-sm text-gray-400 text-center"
-          >
-            Don’t have an account?{" "}
-            <a
-              href="/auth/register"
-              className="text-indigo-400 hover:text-indigo-300 transition"
-            >
-              Register here
-            </a>
-          </motion.p>
         </div>
-      </div>
+
+        {/* Form */}
+        <div className="flex-1 flex items-center justify-center px-16 py-20 relative">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            className="relative w-full max-w-sm rounded-2xl p-8 bg-[#101113]/90 
+                       border border-white/[0.08] shadow-[0_0_40px_rgba(0,0,0,0.5)] backdrop-blur-2xl"
+          >
+            <h2 className="text-3xl font-extrabold mb-3 bg-gradient-to-r from-[#b8dfff] via-[#ffeec2] to-[#ffd7a2] bg-clip-text text-transparent">
+              Welcome Back 👋
+            </h2>
+            <p className="text-white/60 text-sm mb-6">
+              Sign in to continue your journey.
+            </p>
+
+            <LoginForm />
+
+            <p className="mt-6 text-center text-sm text-gray-400">
+              Don’t have an account?{" "}
+              <Link
+                href="/auth/register"
+                className="text-sky-300 hover:text-sky-200 font-medium transition"
+              >
+                Register
+              </Link>
+            </p>
+          </motion.div>
+        </div>
+      </motion.div>
     </div>
   );
 }

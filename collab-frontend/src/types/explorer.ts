@@ -1,17 +1,18 @@
+
 // src/types/explorer.ts
 export type FileNode = {
     id: string;
-    name: string;
     type: "file";
+    name: string;
     content: string;
   };
   
   export type FolderNode = {
     id: string;
-    name: string;
     type: "folder";
-    children: (FileNode | FolderNode)[];
-    isOpen?: boolean;
+    name: string;
+    isOpen: boolean;
+    children: ExplorerNode[];
   };
   
   export type ExplorerNode = FileNode | FolderNode;

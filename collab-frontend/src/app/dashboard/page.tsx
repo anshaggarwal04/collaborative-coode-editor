@@ -3,60 +3,64 @@
 import { useAuthContext } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { Users, PlusCircle } from "lucide-react";
+import { motion } from "framer-motion";
+import InteractiveGlow from "@/components/InteractiveGlow";
 
 export default function DashboardPage() {
   const { user } = useAuthContext();
   const router = useRouter();
 
   return (
-    <div className="relative min-h-screen w-full bg-gradient-to-br from-[#0f172a] via-[#111827] to-[#1e293b] text-white flex items-center justify-center px-6 py-16">
-      <div className="max-w-4xl w-full space-y-10">
-        {/* Welcome Header */}
-        <div className="text-center">
-          <h1 className="text-5xl md:text-6xl font-extrabold bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-500 bg-clip-text text-transparent drop-shadow-lg">
-            Welcome back, {user?.username || "Developer"} 👋
-          </h1>
-          <p className="mt-4 text-lg text-gray-400">
-            Jump right back into collaboration, or start something new.
-          </p>
-        </div>
+    <div className="relative min-h-screen w-full flex items-center justify-center overflow-hidden bg-[#0b0c0f] text-white">
+      <InteractiveGlow color="indigo" intensity={0.15} />
 
-        {/* Action Cards */}
-        <div className="grid sm:grid-cols-2 gap-6">
-          {/* Join Rooms */}
-          <button
+      <motion.div
+        initial={{ opacity: 0, y: 25 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8 }}
+        className="relative z-10 max-w-5xl w-full mx-auto text-center px-6 py-16"
+      >
+        <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight bg-gradient-to-r from-sky-300 via-indigo-300 to-pink-300 bg-clip-text text-transparent">
+          Welcome back, {user?.username || "Developer"} 
+        </h1>
+        <p className="mt-4 text-gray-400 text-lg">
+          Your creative hub — collaborate, create, and code beautifully.
+        </p>
+
+        <div className="grid sm:grid-cols-2 gap-8 mt-16">
+          <motion.button
+            whileHover={{ scale: 1.03, y: -4 }}
             onClick={() => router.push("/rooms/join")}
-            className="group p-8 rounded-2xl bg-[#111827]/80 border border-gray-700 shadow-lg hover:shadow-purple-500/20 transition transform hover:scale-[1.02] text-left"
+            className="group relative overflow-hidden p-10 rounded-3xl bg-[#111315]/80 backdrop-blur-2xl border border-white/10 text-left shadow-[0_0_40px_rgba(0,0,0,0.3)] hover:shadow-[0_0_60px_rgba(56,189,248,0.15)] transition-all duration-500"
           >
-            <div className="flex items-center gap-3 mb-3 text-indigo-400">
-              <Users size={28} className="group-hover:scale-110 transition" />
+            <div className="flex items-center gap-3 text-sky-300">
+              <Users size={28} className="group-hover:scale-110 transition-transform" />
               <h2 className="text-xl font-semibold">Join a Room</h2>
             </div>
-            <p className="text-gray-400">
-              Enter a Room ID or browse your joined rooms.
+            <p className="text-gray-400 mt-2">
+              Instantly connect with your team and start building.
             </p>
-          </button>
+          </motion.button>
 
-          {/* Create Room */}
-          <button
+          <motion.button
+            whileHover={{ scale: 1.03, y: -4 }}
             onClick={() => router.push("/rooms/create")}
-            className="group p-8 rounded-2xl bg-gradient-to-br from-pink-500/20 to-purple-600/20 border border-purple-700 shadow-lg hover:shadow-pink-500/20 transition transform hover:scale-[1.02] text-left"
+            className="group relative overflow-hidden p-10 rounded-3xl bg-[#111315]/80 backdrop-blur-2xl border border-white/10 text-left shadow-[0_0_40px_rgba(0,0,0,0.3)] hover:shadow-[0_0_60px_rgba(255,150,255,0.2)] transition-all duration-500"
           >
-            <div className="flex items-center gap-3 mb-3 text-pink-400">
-              <PlusCircle size={28} className="group-hover:scale-110 transition" />
+            <div className="flex items-center gap-3 text-pink-300">
+              <PlusCircle size={28} className="group-hover:scale-110 transition-transform" />
               <h2 className="text-xl font-semibold">Create a Room</h2>
             </div>
-            <p className="text-gray-400">
-              Spin up a fresh collab session and invite your team.
+            <p className="text-gray-400 mt-2">
+              Start a new workspace, invite collaborators, and innovate freely.
             </p>
-          </button>
+          </motion.button>
         </div>
 
-        {/* Footer */}
         <p className="text-center text-sm text-gray-500 mt-12">
-          🚀 Built for developers, teams, and creators ✨
+          ✨ Built with love for developers.
         </p>
-      </div>
+      </motion.div>
     </div>
   );
 }

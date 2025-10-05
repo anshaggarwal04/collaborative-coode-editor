@@ -7,8 +7,11 @@ import { useAuthContext } from "@/context/AuthContext";
 import TopBar from "@/components/ide/TopBar";
 import CodeEditor from "@/components/ide/CodeEditor";
 import Terminal from "@/components/ide/Terminal";
+import { motion } from "framer-motion";
+import { Layers, FileCode2 } from "lucide-react";
 
 type JudgeLang = { id: number; label: string; monaco: string };
+
 const LANGS: JudgeLang[] = [
   { id: 71, label: "Python", monaco: "python" },
   { id: 63, label: "JavaScript", monaco: "javascript" },
@@ -27,12 +30,10 @@ export default function RoomPage() {
   const [output, setOutput] = useState<string>("⚡ Run your code to see output...");
   const latestCodeRef = useRef(code);
 
-  // keep latest code in ref so we can respond instantly to "requestLatestCode"
   useEffect(() => {
     latestCodeRef.current = code;
   }, [code]);
 
-  // socket lifecycle
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) return;
@@ -40,24 +41,18 @@ export default function RoomPage() {
     const socket = initSocket(token);
     socket.emit("joinRoom", { roomId });
 
-    // Load last persisted snippet (if any)
     socket.on("roomHistory", (history: { event: string; payload?: string }[]) => {
       const last = [...history].reverse().find(h => h.event === "codeChange" && h.payload)?.payload;
       if (last) setCode(last);
     });
 
-    // Live updates
     socket.on("codeUpdate", (incoming: string) => setCode(incoming));
-
-    // Someone new joined—push current snapshot
     socket.on("requestLatestCode", () => {
       try {
-        const s = getSocket();
-        s.emit("codeChange", { roomId, code: latestCodeRef.current });
+        getSocket().emit("codeChange", { roomId, code: latestCodeRef.current });
       } catch {}
     });
 
-    // Compiler results
     socket.on("codeResult", (result) => {
       let out = "";
       if (result.stdout) out += result.stdout;
@@ -69,14 +64,10 @@ export default function RoomPage() {
 
     return () => {
       socket.emit("leaveRoom", { roomId });
-      socket.off("roomHistory");
-      socket.off("codeUpdate");
-      socket.off("requestLatestCode");
-      socket.off("codeResult");
+      socket.off("roomHistory codeUpdate requestLatestCode codeResult");
     };
   }, [roomId]);
 
-  // run via Judge0 through your backend
   const runCode = () => {
     try {
       const s = getSocket();
@@ -103,17 +94,23 @@ export default function RoomPage() {
 
   const leaveRoom = () => {
     try {
-      const s = getSocket();
-      s.emit("leaveRoom", { roomId });
+      getSocket().emit("leaveRoom", { roomId });
     } catch {}
     router.push("/");
   };
 
   return (
-    <div className="fixed inset-0 bg-[#0b0d10] text-gray-200">
-      {/* Centered, full-bleed IDE container */}
-      <div className="h-full w-full grid grid-rows-[56px_1fr_200px] overflow-hidden">
-        {/* Top bar (sticky height) */}
+    <div className="relative h-screen w-screen text-gray-200 bg-gradient-to-br from-[#0b0d10] via-[#0d1117] to-[#0e131a] overflow-hidden">
+
+      {/* ✨ Subtle background grid + glow */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute inset-0 opacity-[0.04] bg-[radial-gradient(circle_at_center,white_1px,transparent_1px)] [background-size:40px_40px]" />
+        <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500/10 via-transparent to-purple-500/10 blur-3xl" />
+      </div>
+
+      {/* Main layout grid */}
+      <div className="relative z-10 grid grid-rows-[56px_1fr_200px] h-full">
+
         <TopBar
           roomId={roomId}
           langs={LANGS}
@@ -124,23 +121,44 @@ export default function RoomPage() {
           onLeave={leaveRoom}
         />
 
-        {/* Editor region (no side gaps, no scroll bleed) */}
-        <div className="relative overflow-hidden">
-          <div className="absolute inset-0 grid grid-cols-[260px_1fr] gap-0">
-            {/* Explorer placeholder: subtle, minimal, non-distracting */}
-            <aside className="border-r border-[#1c2430] bg-[#0e131a]/70 backdrop-blur-sm">
-              <div className="px-4 py-3 text-[11px] tracking-wider text-gray-400">EXPLORER</div>
-              <div className="px-4 py-1 text-sm text-gray-300/80">main.py</div>
-              <div className="px-4 py-1 text-sm text-gray-300/50">src/</div>
-            </aside>
+        {/* Editor Area */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.4 }}
+          className="relative grid grid-cols-[260px_1fr] overflow-hidden"
+        >
+          {/* Sidebar / Explorer */}
+          <aside className="border-r border-white/10 bg-[#0d1117]/70 backdrop-blur-sm flex flex-col">
+            <div className="px-4 py-3 flex items-center gap-2 text-xs uppercase tracking-wider text-gray-400 border-b border-white/5">
+              <Layers size={14} className="text-indigo-400" />
+              Explorer
+            </div>
+            <div className="flex-1 overflow-y-auto px-4 py-3 space-y-1 text-sm">
+              <div className="flex items-center gap-2 text-gray-300 hover:text-indigo-300 transition cursor-pointer">
+                <FileCode2 size={14} />
+                main.py
+              </div>
+              <div className="text-gray-400/70 text-xs ml-5">src/utils.py</div>
+              <div className="text-gray-400/70 text-xs ml-5">README.md</div>
+            </div>
+          </aside>
 
-            {/* Monaco */}
+          {/* Monaco editor container */}
+          <div className="relative bg-[#0e131a]/60">
             <CodeEditor language={lang.monaco} value={code} onChange={setCode} />
           </div>
-        </div>
+        </motion.div>
 
-        {/* Terminal (fixed height, elegant) */}
-        <Terminal output={output} />
+        {/* Terminal */}
+        <motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.2 }}
+          className="relative border-t border-white/10 bg-[#0b0d10]/80 backdrop-blur-md shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]"
+        >
+          <Terminal output={output} />
+        </motion.div>
       </div>
     </div>
   );

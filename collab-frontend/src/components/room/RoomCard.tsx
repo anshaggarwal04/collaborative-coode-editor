@@ -10,7 +10,7 @@ import { motion } from "framer-motion";
 interface RoomCardProps {
   id: string;
   name: string;
-  createdBy: string; // ✅ assume this is already a username, not ID
+  createdBy: string;
   createdAt: string;
   participants?: { user: { id: string; username: string } }[];
 }
@@ -31,7 +31,6 @@ export default function RoomCard({
       router.push(`/rooms/${id}`);
     } catch (err) {
       const error = err as AxiosError<{ error?: string }>;
-      console.error(error);
       toast.error(error.response?.data?.error || "Failed to join room");
     }
   };
@@ -47,37 +46,46 @@ export default function RoomCard({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: "easeOut" }}
-      whileHover={{ scale: 1.02 }}
-      className="rounded-xl bg-[#111827]/80 border border-gray-700 
-                 shadow-md hover:shadow-purple-500/20 
-                 transition-all duration-200 p-5 cursor-pointer"
+      whileHover={{
+        scale: 1.03,
+        boxShadow:
+          "0 0 30px rgba(16,185,129,0.25), 0 0 12px rgba(255,255,255,0.08)",
+      }}
       onClick={handleJoin}
+      className="p-6 rounded-2xl cursor-pointer border border-white/10 
+                 bg-[#121417]/80 backdrop-blur-xl 
+                 shadow-[0_0_25px_rgba(0,0,0,0.4)] 
+                 hover:border-emerald-400/40 transition-all duration-300"
     >
-      <h3 className="text-lg font-semibold text-white mb-2">{name}</h3>
+      <h3 className="text-lg font-semibold mb-2 text-white">
+        {name}
+      </h3>
 
       <div className="text-sm text-gray-400 space-y-1">
         <p>
-          👤 Created by <span className="text-purple-400">{createdBy}</span>
+          👤 Created by{" "}
+          <span className="text-emerald-400 font-medium">{createdBy}</span>
         </p>
         <p className="flex items-center gap-2">
           <Users size={14} className="text-cyan-400" />
           {participants.length} participant{participants.length !== 1 && "s"}
         </p>
         <p className="flex items-center gap-2">
-          <Calendar size={14} className="text-pink-400" />
+          <Calendar size={14} className="text-emerald-300" />
           Created on {formattedDate}
         </p>
       </div>
 
-      <div className="mt-4 flex justify-end">
+      <div className="mt-5 flex justify-end">
         <button
           onClick={(e) => {
-            e.stopPropagation(); // prevent card click
+            e.stopPropagation();
             handleJoin();
           }}
-          className="px-4 py-2 text-sm rounded-lg font-medium 
-                     bg-gradient-to-r from-indigo-500 to-purple-600 
-                     text-white shadow hover:scale-105 transition"
+          className="px-5 py-2.5 text-sm rounded-lg font-medium text-white 
+                     bg-emerald-600 hover:bg-emerald-500 
+                     shadow-[0_0_20px_rgba(16,185,129,0.3)] 
+                     transition-all duration-300 active:scale-95"
         >
           Join
         </button>

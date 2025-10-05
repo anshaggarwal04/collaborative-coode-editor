@@ -2,14 +2,16 @@
 
 import { useAuth } from "@/hooks/useAuth";
 import RegisterForm from "@/components/RegisterForm";
+import InteractiveGlow from "@/components/InteractiveGlow";
 import { motion } from "framer-motion";
+import Link from "next/link";
 
 export default function RegisterPage() {
   const { isAuthenticated, loading } = useAuth(false);
 
-  if (loading) {
+  if (loading)
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[#0f172a] via-[#111827] to-[#1e293b] text-white">
+      <div className="flex min-h-screen items-center justify-center bg-[#0b0c0f] text-white">
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -19,11 +21,10 @@ export default function RegisterPage() {
         </motion.p>
       </div>
     );
-  }
 
-  if (isAuthenticated) {
+  if (isAuthenticated)
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[#0f172a] via-[#111827] to-[#1e293b] text-white">
+      <div className="flex min-h-screen items-center justify-center bg-[#0b0c0f] text-white">
         <motion.p
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -33,76 +34,64 @@ export default function RegisterPage() {
         </motion.p>
       </div>
     );
-  }
 
   return (
-    <div className="min-h-screen flex overflow-hidden">
-      {/* 🔹 Left Panel: Branding */}
-      <div className="hidden lg:flex flex-col justify-center items-center w-1/2 relative text-white">
-        {/* Animated Gradient Background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-indigo-600 via-purple-700 to-pink-600 animate-gradient-xy" />
-        {/* Overlay Glow */}
-        <div className="absolute inset-0 opacity-30 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.2),transparent_70%)] animate-pulse" />
+    <div className="relative min-h-screen flex items-center justify-center bg-[#0b0c0f] overflow-hidden text-white">
+      <InteractiveGlow color="pink" intensity={0.22} />
 
-        {/* Branding Content */}
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="relative z-10 text-center px-8"
-        >
-          <h1 className="text-6xl font-extrabold tracking-tight drop-shadow-xl">
-            Join <span className="text-pink-300">CollabEditor</span>
-          </h1>
-          <p className="mt-6 text-lg text-white/80 max-w-md mx-auto">
-            Sign up today to collaborate, code, and create in real-time with your team 🚀
-          </p>
-        </motion.div>
-      </div>
-
-      {/* 🔹 Right Panel: Register Form */}
-      <div className="flex flex-col justify-center items-center w-full lg:w-1/2 px-8 py-12 bg-[#0f172a] relative">
-        {/* Glow Backdrop */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_30%,rgba(139,92,246,0.2),transparent)]" />
-
-        <div className="w-full max-w-md relative z-10">
-          {/* Header */}
-          <motion.h2
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="text-4xl font-bold mb-6 text-center bg-gradient-to-r from-pink-400 via-purple-400 to-indigo-500 bg-clip-text text-transparent"
-          >
-            Create Your Account
-          </motion.h2>
-
-          {/* Register Form */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.3, duration: 0.5 }}
-            className="rounded-2xl bg-[#111827]/80 backdrop-blur-xl border border-gray-700/50 shadow-2xl p-8"
-          >
-            <RegisterForm />
-          </motion.div>
-
-          {/* Footer Link */}
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.7 }}
-            className="mt-6 text-sm text-gray-400 text-center"
-          >
-            Already have an account?{" "}
-            <a
-              href="/auth/login"
-              className="text-indigo-400 hover:text-indigo-300 transition"
-            >
-              Login here
-            </a>
-          </motion.p>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8 }}
+        className="relative flex flex-col lg:flex-row items-center justify-between 
+                   w-[90%] lg:w-[75%] max-w-6xl mx-auto rounded-3xl 
+                   border border-white/10 backdrop-blur-2xl bg-white/[0.03]
+                   shadow-[0_0_80px_rgba(255,255,255,0.05)] overflow-hidden"
+      >
+        {/* Left Panel */}
+        <div className="flex-1 flex flex-col justify-center text-center lg:text-left px-16 py-20">
+          <div className="inline-block rounded-2xl bg-white/[0.04] backdrop-blur-md 
+                          border border-white/10 px-10 py-8 shadow-[0_0_60px_rgba(255,140,200,0.1)] 
+                          hover:shadow-[0_0_80px_rgba(255,150,210,0.2)] transition-shadow duration-700">
+            <h1 className="text-6xl font-extrabold tracking-tight mb-4 leading-tight ">
+              Join <span className="text-sky-400">CollabEditor</span>
+            </h1>
+            <p className="text-white/70 text-base leading-relaxed">
+              Build. Share. Collaborate. Start your creative journey today 🚀
+            </p>
+          </div>
         </div>
-      </div>
+
+        {/* Right Panel */}
+        <div className="flex-1 flex items-center justify-center px-16 py-20 relative">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            className="relative w-full max-w-sm rounded-2xl p-8 bg-[#101113]/90 
+                       border border-white/[0.08] shadow-[0_0_40px_rgba(0,0,0,0.5)] backdrop-blur-2xl"
+          >
+            <h2 className="text-3xl font-extrabold mb-3 bg-gradient-to-r from-pink-200 via-purple-200 to-indigo-300 bg-clip-text text-transparent">
+              Create Your Account 
+            </h2>
+            <p className="text-white/60 text-sm mb-6">
+              Start collaborating with your team today.
+            </p>
+
+            <RegisterForm />
+
+            <p className="mt-6 text-center text-sm text-gray-400">
+              Already have an account?{" "}
+              <Link
+                href="/auth/login"
+                className="text-pink-300 hover:text-pink-200 font-medium transition"
+              >
+                Login
+              </Link>
+            </p>
+          </motion.div>
+        </div>
+      </motion.div>
     </div>
   );
 }

@@ -8,7 +8,17 @@ export default {
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
-    extend: {},
+    extend: {keyframes: {
+      // 🔹 Smooth diagonal gradient animation
+      gradient: {
+        "0%, 100%": { backgroundPosition: "0% 50%" },
+        "50%": { backgroundPosition: "100% 50%" },
+      },
+    },
+    animation: {
+      gradient: "gradient 8s ease infinite",
+    },
+  },
   },
   plugins: [daisyui],
   daisyui: {
