@@ -1,18 +1,15 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { initSocket, getSocket } from "@/lib/socket";
 import { useAuthContext } from "@/context/AuthContext";
+import { useRoomSocket } from "@/hooks/useRoomSocket";
 import TopBar from "@/components/ide/TopBar";
 import CodeEditor from "@/components/ide/CodeEditor";
 import Terminal from "@/components/ide/Terminal";
 import { motion } from "framer-motion";
 import { Layers, FileCode2 } from "lucide-react";
 
-type JudgeLang = { id: number; label: string; monaco: string };
-
-const LANGS: JudgeLang[] = [
+const LANGS = [
   { id: 71, label: "Python", monaco: "python" },
   { id: 63, label: "JavaScript", monaco: "javascript" },
   { id: 62, label: "Java", monaco: "java" },
@@ -23,139 +20,82 @@ export default function RoomPage() {
   const { id } = useParams();
   const roomId = String(id);
   const router = useRouter();
-  useAuthContext();
-
-  const [code, setCode] = useState("");
-  const [lang, setLang] = useState<JudgeLang>(LANGS[0]);
-  const [output, setOutput] = useState<string>("⚡ Run your code to see output...");
-  const latestCodeRef = useRef(code);
-
-  useEffect(() => {
-    latestCodeRef.current = code;
-  }, [code]);
-
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
-
-    const socket = initSocket(token);
-    socket.emit("joinRoom", { roomId });
-
-    socket.on("roomHistory", (history: { event: string; payload?: string }[]) => {
-      const last = [...history].reverse().find(h => h.event === "codeChange" && h.payload)?.payload;
-      if (last) setCode(last);
-    });
-
-    socket.on("codeUpdate", (incoming: string) => setCode(incoming));
-    socket.on("requestLatestCode", () => {
-      try {
-        getSocket().emit("codeChange", { roomId, code: latestCodeRef.current });
-      } catch {}
-    });
-
-    socket.on("codeResult", (result) => {
-      let out = "";
-      if (result.stdout) out += result.stdout;
-      if (result.stderr) out += (out ? "\n" : "") + `‼️ Error:\n${result.stderr}`;
-      if (result.compile_output)
-        out += (out ? "\n" : "") + `ℹ️ Compile Output:\n${result.compile_output}`;
-      setOutput(out || "No output.");
-    });
-
-    return () => {
-      socket.emit("leaveRoom", { roomId });
-      socket.off("roomHistory codeUpdate requestLatestCode codeResult");
-    };
-  }, [roomId]);
-
-  const runCode = () => {
-    try {
-      const s = getSocket();
-      setOutput("⏳ Running…");
-      s.emit("runCode", {
-        roomId,
-        language_id: lang.id,
-        source_code: latestCodeRef.current,
-        stdin: "",
-      });
-    } catch {
-      setOutput("Socket not connected.");
-    }
-  };
-
-  const shareRoom = async () => {
-    try {
-      await navigator.clipboard.writeText(roomId);
-      setOutput("✅ Room ID copied to clipboard.");
-    } catch {
-      setOutput("Could not copy Room ID.");
-    }
-  };
-
-  const leaveRoom = () => {
-    try {
-      getSocket().emit("leaveRoom", { roomId });
-    } catch {}
-    router.push("/");
-  };
+  const { user } = useAuthContext();
+  const { code, setCode, output, runCode, sendCode } = useRoomSocket({ roomId });
 
   return (
-    <div className="relative h-screen w-screen text-gray-200 bg-gradient-to-br from-[#0b0d10] via-[#0d1117] to-[#0e131a] overflow-hidden">
+    <div className="relative h-screen w-screen text-gray-100 bg-[#0b0c0f] overflow-hidden">
+      {/* Background Glow */}
+      <div className="absolute inset-0 bg-gradient-to-br from-[#10131a] via-[#0f1115] to-[#151921]" />
+      <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_top_left,rgba(255,255,255,0.05),transparent_50%),radial-gradient(ellipse_at_bottom_right,rgba(255,255,255,0.04),transparent_50%)]" />
 
-      {/* ✨ Subtle background grid + glow */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute inset-0 opacity-[0.04] bg-[radial-gradient(circle_at_center,white_1px,transparent_1px)] [background-size:40px_40px]" />
-        <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500/10 via-transparent to-purple-500/10 blur-3xl" />
-      </div>
-
-      {/* Main layout grid */}
-      <div className="relative z-10 grid grid-rows-[56px_1fr_200px] h-full">
-
+      {/* Layout Grid */}
+      <div className="relative z-10 grid grid-rows-[56px_1fr_220px] h-full">
+        {/* ─ Top Command Bar ─ */}
         <TopBar
           roomId={roomId}
           langs={LANGS}
-          lang={lang}
-          onLangChange={setLang}
-          onRun={runCode}
-          onShare={shareRoom}
-          onLeave={leaveRoom}
+          lang={LANGS[0]}
+          onLangChange={() => {}}
+          onRun={() => runCode(LANGS[0].id)}
+          onShare={() => navigator.clipboard.writeText(roomId)}
+          onLeave={() => router.push("/")}
         />
 
-        {/* Editor Area */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.4 }}
-          className="relative grid grid-cols-[260px_1fr] overflow-hidden"
-        >
-          {/* Sidebar / Explorer */}
-          <aside className="border-r border-white/10 bg-[#0d1117]/70 backdrop-blur-sm flex flex-col">
+        {/* ─ Middle Section (Editor + Explorer) ─ */}
+        <div className="grid grid-cols-[260px_1fr] h-full overflow-hidden border-t border-white/10">
+          {/* Left Explorer */}
+          <motion.aside
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5 }}
+            className="bg-[#0e1117]/90 border-r border-white/10 backdrop-blur-md flex flex-col"
+          >
             <div className="px-4 py-3 flex items-center gap-2 text-xs uppercase tracking-wider text-gray-400 border-b border-white/5">
-              <Layers size={14} className="text-indigo-400" />
-              Explorer
+              <Layers size={14} className="text-cyan-400" />
+              Project Explorer
             </div>
-            <div className="flex-1 overflow-y-auto px-4 py-3 space-y-1 text-sm">
-              <div className="flex items-center gap-2 text-gray-300 hover:text-indigo-300 transition cursor-pointer">
+
+            <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3 text-sm">
+              <div className="flex items-center gap-2 text-gray-300 hover:text-white cursor-pointer transition">
                 <FileCode2 size={14} />
                 main.py
               </div>
-              <div className="text-gray-400/70 text-xs ml-5">src/utils.py</div>
-              <div className="text-gray-400/70 text-xs ml-5">README.md</div>
+              <div className="pl-6 text-gray-500 text-xs">src/helpers.py</div>
+              <div className="pl-6 text-gray-500 text-xs">README.md</div>
             </div>
-          </aside>
 
-          {/* Monaco editor container */}
-          <div className="relative bg-[#0e131a]/60">
-            <CodeEditor language={lang.monaco} value={code} onChange={setCode} />
-          </div>
-        </motion.div>
+            {/* Room Info */}
+            <div className="px-4 py-3 border-t border-white/10 text-xs text-gray-400">
+              <p>Room ID:</p>
+              <p className="font-mono text-gray-300 text-sm truncate mt-1">{roomId}</p>
+            </div>
+          </motion.aside>
 
-        {/* Terminal */}
+          {/* Main Editor */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.4 }}
+            className="relative bg-[#0d0f14]/80"
+          >
+            <CodeEditor
+              language={LANGS[0].monaco}
+              value={code}
+              onChange={(v) => {
+                setCode(v);
+                sendCode(v);
+              }}
+            />
+          </motion.div>
+        </div>
+
+        {/* ─ Bottom Terminal ─ */}
         <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.2 }}
-          className="relative border-t border-white/10 bg-[#0b0d10]/80 backdrop-blur-md shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1, duration: 0.6 }}
+          className="border-t border-white/10 bg-[#0a0c10]/90 backdrop-blur-lg"
         >
           <Terminal output={output} />
         </motion.div>

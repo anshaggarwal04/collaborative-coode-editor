@@ -1,9 +1,18 @@
 "use client";
 
-import { ChevronDown, Play, Share2, LogOut, Code2 } from "lucide-react";
 import { motion } from "framer-motion";
+import { Play, Share2, LogOut, Terminal, Cpu } from "lucide-react";
+import { useState } from "react";
 
-type Lang = { id: number; label: string; monaco: string };
+interface TopBarProps {
+  roomId: string;
+  langs: { id: number; label: string; monaco: string }[];
+  lang: { id: number; label: string; monaco: string };
+  onLangChange: (lang: { id: number; label: string; monaco: string }) => void;
+  onRun: () => void;
+  onShare: () => void;
+  onLeave: () => void;
+}
 
 export default function TopBar({
   roomId,
@@ -13,101 +22,89 @@ export default function TopBar({
   onRun,
   onShare,
   onLeave,
-}: {
-  roomId: string;
-  langs: Lang[];
-  lang: Lang;
-  onLangChange: (l: Lang) => void;
-  onRun: () => void;
-  onShare: () => void;
-  onLeave: () => void;
-}) {
+}: TopBarProps) {
+  const [running, setRunning] = useState(false);
+
+  const handleRun = async () => {
+    setRunning(true);
+    onRun();
+    setTimeout(() => setRunning(false), 1800);
+  };
+
   return (
     <motion.header
-      initial={{ y: -15, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
-      className="
-        flex items-center justify-between
-        px-6 h-[56px]
-        bg-[#0b0f16]/70 backdrop-blur-md
-        border-b border-white/10
-        shadow-[0_1px_6px_rgba(0,0,0,0.4)]
-        sticky top-0 z-50
-      "
+      className="relative z-20 flex items-center justify-between h-[56px] px-6 border-b border-white/10 
+                 bg-[#0c0f13]/90 backdrop-blur-md shadow-[0_1px_0_rgba(255,255,255,0.05)]"
     >
-      {/* Left section */}
+      {/* Left — Room Info */}
       <div className="flex items-center gap-3">
-        <div className="flex items-center gap-2">
-          <Code2 size={18} className="text-purple-400" />
-          <span className="text-sm text-gray-400">Room ID:</span>
-        </div>
-        <motion.span
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="px-3 py-1 text-xs font-medium bg-[#151b24] border border-[#1c2430]
-                     rounded-lg text-indigo-400 hover:text-indigo-300 cursor-pointer select-all"
+        <Cpu size={18} className="text-gray-400" />
+        <h1 className="text-sm md:text-base font-semibold text-white tracking-wide">
+          Room: <span className="text-gray-400 font-normal">{roomId.slice(0, 8)}...</span>
+        </h1>
+
+        {/* Language Select */}
+        <select
+          value={lang.id}
+          onChange={(e) => {
+            const selected = langs.find((l) => l.id === Number(e.target.value));
+            if (selected) onLangChange(selected);
+          }}
+          className="ml-4 bg-[#101317] border border-white/10 text-sm text-gray-300 rounded-md px-3 py-1.5 
+                     focus:ring-1 focus:ring-cyan-400/50 focus:outline-none hover:bg-[#14181f] transition"
         >
-          {roomId}
-        </motion.span>
+          {langs.map((l) => (
+            <option key={l.id} value={l.id}>
+              {l.label}
+            </option>
+          ))}
+        </select>
       </div>
 
-      {/* Right controls */}
-      <div className="flex items-center gap-4">
-        {/* Language Selector */}
-        <div className="relative">
-          <select
-            value={lang.id}
-            onChange={(e) =>
-              onLangChange(
-                langs.find((l) => l.id === Number(e.target.value)) || lang
-              )
-            }
-            className="appearance-none bg-[#151b24] text-sm text-gray-200
-                       border border-[#1c2430] rounded-md px-3 py-1 pr-8
-                       focus:outline-none focus:ring-1 focus:ring-purple-500 transition-all"
-          >
-            {langs.map((l) => (
-              <option key={l.id} value={l.id}>
-                {l.label}
-              </option>
-            ))}
-          </select>
-          <ChevronDown
-            size={16}
-            className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-gray-400"
-          />
-        </div>
+      {/* Center — Run Status */}
+      <motion.div
+        animate={{
+          opacity: running ? [0.6, 1, 0.6] : 1,
+          scale: running ? [1, 1.1, 1] : 1,
+        }}
+        transition={{ duration: 1, repeat: running ? Infinity : 0 }}
+        className="hidden md:flex items-center gap-2 text-sm text-gray-400"
+      >
+        <Terminal size={14} />
+        {running ? (
+          <span className="text-cyan-400">Running...</span>
+        ) : (
+          <span className="text-gray-500">Idle</span>
+        )}
+      </motion.div>
 
-        {/* Buttons */}
+      {/* Right — Actions */}
+      <div className="flex items-center gap-3">
         <button
-          onClick={onRun}
-          className="inline-flex items-center gap-2 px-4 py-1.5 text-sm font-medium
-                     rounded-md bg-gradient-to-r from-emerald-500 to-green-500
-                     hover:from-emerald-400 hover:to-green-400 text-white
-                     transition-all shadow-lg hover:shadow-emerald-500/20"
+          onClick={handleRun}
+          className="flex items-center gap-2 px-4 py-1.5 rounded-md bg-white/5 border border-white/10 text-sm text-white 
+                     hover:bg-white/[0.08] hover:border-cyan-400/40 transition duration-200"
         >
-          <Play size={15} /> Run
+          <Play size={14} className="text-cyan-400" /> Run
         </button>
 
         <button
           onClick={onShare}
-          className="inline-flex items-center gap-2 px-4 py-1.5 text-sm font-medium
-                     rounded-md bg-gradient-to-r from-indigo-500 to-purple-500
-                     hover:from-indigo-400 hover:to-purple-400 text-white
-                     transition-all shadow-lg hover:shadow-purple-500/20"
+          className="flex items-center gap-2 px-4 py-1.5 rounded-md bg-white/5 border border-white/10 text-sm text-white 
+                     hover:bg-white/[0.08] hover:border-gray-400/40 transition duration-200"
         >
-          <Share2 size={15} /> Share
+          <Share2 size={14} /> Share
         </button>
 
         <button
           onClick={onLeave}
-          className="inline-flex items-center gap-2 px-4 py-1.5 text-sm font-medium
-                     rounded-md bg-gradient-to-r from-red-600 to-pink-600
-                     hover:from-red-500 hover:to-pink-500 text-white
-                     transition-all shadow-lg hover:shadow-red-500/20"
+          className="flex items-center gap-2 px-4 py-1.5 rounded-md bg-white/5 border border-white/10 text-sm text-white 
+                     hover:bg-white/[0.08] hover:border-red-400/40 transition duration-200"
         >
-          <LogOut size={15} /> Leave
+          <LogOut size={14} className="text-red-400" /> Leave
         </button>
       </div>
     </motion.header>
