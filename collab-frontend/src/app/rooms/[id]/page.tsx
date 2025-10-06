@@ -2,7 +2,7 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useAuthContext } from "@/context/AuthContext";
-import { useRoomSocket } from "@/hooks/useRoomSocket";
+import { useRoomSocket } from "../../../hooks/useRoomSocket";
 import TopBar from "@/components/ide/TopBar";
 import CodeEditor from "@/components/ide/CodeEditor";
 import Terminal from "@/components/ide/Terminal";
