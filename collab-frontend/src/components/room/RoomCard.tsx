@@ -45,49 +45,63 @@ export default function RoomCard({
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, ease: "easeOut" }}
-      whileHover={{
-        scale: 1.03,
-        boxShadow:
-          "0 0 30px rgba(16,185,129,0.25), 0 0 12px rgba(255,255,255,0.08)",
+      whileHover={{ 
+        borderColor: "rgba(255,255,255,0.15)",
+        backgroundColor: "rgba(255,255,255,0.01)" 
       }}
       onClick={handleJoin}
-      className="p-6 rounded-2xl cursor-pointer border border-white/10 
-                 bg-[#121417]/80 backdrop-blur-xl 
-                 shadow-[0_0_25px_rgba(0,0,0,0.4)] 
-                 hover:border-emerald-400/40 transition-all duration-300"
+      className="group relative p-8 rounded-none border border-white/5 bg-[#0a0a0a] transition-all cursor-pointer overflow-hidden flex flex-col gap-8"
     >
-      <h3 className="text-lg font-semibold mb-2 text-white">
-        {name}
-      </h3>
-
-      <div className="text-sm text-gray-400 space-y-1">
-        <p>
-          👤 Created by{" "}
-          <span className="text-emerald-400 font-medium">{createdBy}</span>
-        </p>
-        <p className="flex items-center gap-2">
-          <Users size={14} className="text-cyan-400" />
-          {participants.length} participant{participants.length !== 1 && "s"}
-        </p>
-        <p className="flex items-center gap-2">
-          <Calendar size={14} className="text-emerald-300" />
-          Created on {formattedDate}
-        </p>
+      {/* 📡 Signal Status Indicator */}
+      <div className="absolute top-0 right-0 p-4 flex items-center gap-2">
+         <span className="text-[8px] font-black text-emerald-500 uppercase tracking-widest">Live_Signal</span>
+         <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
       </div>
 
-      <div className="mt-5 flex justify-end">
+      {/* Node Header */}
+      <div className="space-y-1">
+        <h3 className="text-2xl font-black uppercase tracking-tighter text-white group-hover:text-blue-400 transition-colors truncate">
+          {name}
+        </h3>
+        <div className="text-[9px] font-black text-gray-700 uppercase tracking-[0.3em]">Node_Identity // Verified</div>
+      </div>
+
+      {/* Metadata Grid */}
+      <div className="grid grid-cols-2 gap-y-6 pt-6 border-t border-white/5">
+        <div className="flex flex-col">
+           <span className="text-[8px] font-black text-gray-700 uppercase tracking-widest leading-none mb-1">Architect</span>
+           <span className="text-[11px] font-bold text-gray-400 font-mono tracking-tight truncate pr-4">{createdBy}</span>
+        </div>
+        <div className="flex flex-col items-end">
+           <span className="text-[8px] font-black text-gray-700 uppercase tracking-widest leading-none mb-1">Peer_Count</span>
+           <div className="flex items-center gap-2">
+              <span className="text-[11px] font-bold text-gray-400 font-mono tracking-tight">{participants.length}x</span>
+              <Users size={12} className="text-gray-700" />
+           </div>
+        </div>
+        <div className="flex flex-col">
+           <span className="text-[8px] font-black text-gray-700 uppercase tracking-widest leading-none mb-1">Timestamp</span>
+           <div className="flex items-center gap-2">
+              <Calendar size={12} className="text-gray-700" />
+              <span className="text-[11px] font-bold text-gray-500 font-mono tracking-tight uppercase">{formattedDate}</span>
+           </div>
+        </div>
+        <div className="flex flex-col items-end">
+           <span className="text-[8px] font-black text-gray-700 uppercase tracking-widest leading-none mb-1">FragmentID</span>
+           <span className="text-[10px] font-bold text-gray-600 font-mono tracking-tight">#{id.slice(0, 8)}</span>
+        </div>
+      </div>
+
+      {/* Action Sequence */}
+      <div className="mt-4 pt-4">
         <button
           onClick={(e) => {
             e.stopPropagation();
             handleJoin();
           }}
-          className="px-5 py-2.5 text-sm rounded-lg font-medium text-white 
-                     bg-emerald-600 hover:bg-emerald-500 
-                     shadow-[0_0_20px_rgba(16,185,129,0.3)] 
-                     transition-all duration-300 active:scale-95"
+          className="w-full py-4 text-[10px] font-black uppercase tracking-[0.3em] bg-white text-black hover:bg-gray-200 transition-all flex items-center justify-center gap-2 active:scale-[0.98]"
         >
-          Join
+          Initialize_Link
         </button>
       </div>
     </motion.div>

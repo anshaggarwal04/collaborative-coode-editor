@@ -1,12 +1,12 @@
 "use client";
 
 import "@/styles/globals.css";
-import { Inter } from "next/font/google";
+import { Outfit } from "next/font/google";
 import { AuthProvider } from "@/context/AuthContext";
 import Navbar from "@/components/Navbar";
 import ToasterProvider from "@/components/ToasterProvider";
 
-const inter = Inter({ subsets: ["latin"] });
+const outfit = Outfit({ subsets: ["latin"] });
 
 export default function RootLayout({
   children,
@@ -14,25 +14,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" data-theme="dark">
-      <body
-        className={`${inter.className} bg-[#0b0c0f] text-white h-screen w-screen overflow-hidden`}
-      >
-        {/* ✅ Auth & Toast context providers */}
+    <html lang="en" data-theme="dark" className="bg-[#050505] antialiased">
+      <body className={`${outfit.className} bg-[#050505] text-white selection:bg-white selection:text-black`}>
         <AuthProvider>
           <ToasterProvider />
-
-          {/* ✅ Global layout */}
-          <div className="flex flex-col h-full w-full">
-            {/* Persistent Navbar */}
-            <Navbar />
-
-            {/* Main content area */}
-            <main className="flex-1 w-full h-full overflow-auto">
-              {/* Adds spacing for navbar */}
-              <div className="pt-[64px] px-4 md:px-8">{children}</div>
-            </main>
-          </div>
+          <Navbar />
+          <main className="relative w-full h-full min-h-screen">
+            {children}
+          </main>
         </AuthProvider>
       </body>
     </html>

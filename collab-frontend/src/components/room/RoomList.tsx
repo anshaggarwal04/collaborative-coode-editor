@@ -19,51 +19,42 @@ export default function RoomList() {
   }
 
   return (
-    <div className="relative z-10 w-full max-w-7xl mx-auto px-6 py-16">
-      {/* ───────────────────────────── Header ───────────────────────────── */}
-      <div className="flex flex-col sm:flex-row justify-between items-center mb-12">
-        <motion.h1
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
-          className="text-4xl font-extrabold text-transparent bg-clip-text 
-                     bg-gradient-to-r from-white/90 to-white/70 tracking-tight"
-        >
-          Available Rooms
-        </motion.h1>
+    <div className="relative z-10 w-full max-w-7xl mx-auto px-6 py-10">
+      {/* ───────────────────────────── Registry Header ───────────────────────────── */}
+      <div className="flex flex-col sm:flex-row justify-between items-end mb-16 border-b border-white/5 pb-10 gap-8">
+        <div className="space-y-4">
+          <div className="flex items-center gap-3">
+             <div className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]" />
+             <span className="text-[10px] font-black text-gray-600 uppercase tracking-[0.4em]">Nodes // Discovery_Active</span>
+          </div>
+          <motion.h1
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="text-5xl md:text-7xl font-black text-white tracking-tighter uppercase leading-none"
+          >
+            Active_<span className="text-gray-600">Registry.</span>
+          </motion.h1>
+          <p className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em]">Authorized Environment Observation Layer</p>
+        </div>
 
         <motion.button
-          whileHover={{
-            scale: 1.04,
-            boxShadow:
-              "0 0 25px rgba(16,185,129,0.3), 0 0 10px rgba(255,255,255,0.1)",
-          }}
-          whileTap={{ scale: 0.96 }}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
           onClick={() => router.push("/rooms/create")}
-          className="mt-5 sm:mt-0 flex items-center gap-2 px-6 py-3 rounded-xl
-                     bg-[#1a1d1f] text-white font-medium border border-white/10
-                     hover:bg-[#1f2225] hover:border-emerald-400/30 transition-all duration-300"
+          className="flex items-center gap-3 px-8 py-4 bg-white text-black text-[10px] font-black uppercase tracking-[0.2em] transition-all shadow-xl active:scale-95"
         >
-          <PlusCircle size={18} /> Create Room
+          <PlusCircle size={16} strokeWidth={2.5} /> Initialize_New_Node
         </motion.button>
       </div>
 
-      {/* ───────────────────────────── Rooms Grid ───────────────────────────── */}
+      {/* ───────────────────────────── Node Grid ───────────────────────────── */}
       {rooms.length === 0 ? (
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.8 }}
-          className="text-center text-gray-400 mt-24 text-lg"
-        >
-          <motion.span
-            animate={{ opacity: [0.7, 1, 0.7], y: [0, -2, 0] }}
-            transition={{ duration: 2, repeat: Infinity }}
-            className="text-emerald-300"
-          >
-            No rooms available yet 🌱
-          </motion.span>
-        </motion.p>
+        <div className="flex flex-col items-center justify-center py-40 border border-dashed border-white/5 bg-white/[0.01]">
+            <span className="text-[10px] font-black text-gray-700 uppercase tracking-[0.6em] animate-pulse">
+               Empty_History_Fragment
+            </span>
+            <span className="mt-4 text-[8px] font-mono text-gray-800 uppercase tracking-widest">Waiting for incoming synchronization...</span>
+        </div>
       ) : (
         <motion.div
           initial="hidden"
@@ -72,21 +63,17 @@ export default function RoomList() {
             hidden: { opacity: 0 },
             visible: {
               opacity: 1,
-              transition: { staggerChildren: 0.08 },
+              transition: { staggerChildren: 0.05 },
             },
           }}
-          className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3"
+          className="grid gap-px bg-white/5 border border-white/5"
         >
           {rooms.map((room) => (
             <motion.div
               key={room.id}
               variants={{
-                hidden: { opacity: 0, y: 20 },
+                hidden: { opacity: 0, y: 10 },
                 visible: { opacity: 1, y: 0 },
-              }}
-              whileHover={{
-                scale: 1.02,
-                transition: { duration: 0.25 },
               }}
             >
               <RoomCard {...room} />

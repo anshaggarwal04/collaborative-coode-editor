@@ -18,11 +18,11 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Security + CORS
-applySecurity(app);
+// Security + CORS (Now applied in index.js after Redis connects)
+// applySecurity(app);
 app.use(
   cors({
-    origin: "http://localhost:3000",
+    origin: process.env.FRONTEND_URL || "http://localhost:3000",
     credentials: true,
   })
 );

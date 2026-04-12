@@ -1,8 +1,10 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect, useRef } from "react";
-import { getSocket } from "@/lib/socket";
+import { useEffect, useRef, useState } from "react";
+import * as Y from "yjs";
+import { WebsocketProvider } from "y-websocket";
+import { MonacoBinding } from "y-monaco";
 
 // Dynamically import Monaco only on client
 const Monaco = dynamic(() => import("@monaco-editor/react"), { ssr: false });
@@ -15,44 +17,64 @@ interface CodeEditorProps {
 }
 
 export default function CodeEditor({ language, value, onChange, roomId }: CodeEditorProps) {
-  const debounceRef = useRef<NodeJS.Timeout | null>(null);
+  const [editorReady, setEditorReady] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const editorRef = useRef<any>(null);
+  const providerRef = useRef<WebsocketProvider | null>(null);
+  const bindingRef = useRef<MonacoBinding | null>(null);
 
-  // 🔹 Send code updates with debounce for smooth collab
-  const broadcast = (code: string) => {
-    try {
-      if (!roomId) return; // keep reusable
-      const socket = getSocket();
-      socket.emit("codeChange", { roomId, code });
-    } catch (err) {
-      console.warn("Socket not ready:", err);
-    }
-  };
-
-  // 🔹 Clear timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-    };
-  }, []);
-
-  // 🔹 Handle typing changes
+  // 🔹 Handle standard non-Yjs onChange fallback
   const handleChange = (newValue?: string) => {
     const next = newValue || "";
     onChange(next);
-
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => broadcast(next), 250);
   };
 
   // 🔹 Store editor ref on mount
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleEditorMount = (editor: any) => {
     editorRef.current = editor;
+    setEditorReady(true);
     editor.focus(); // auto focus
   };
 
+  // 🔹 Setup Yjs + y-monaco when editor and room are ready
+  useEffect(() => {
+    if (!editorReady || !roomId) return;
+
+    // 1. Initialize Yjs
+    const ydoc = new Y.Doc();
+    
+    // 2. Connect to the WebSocket specific for Yjs state
+    // We point this to our updated backend endpoint on path /yjs
+    const provider = new WebsocketProvider(
+      "ws://localhost:5010/yjs",
+      roomId,
+      ydoc
+    );
+    providerRef.current = provider;
+
+    // 3. Define a shared text type for the editor
+    const ytext = ydoc.getText("monaco");
+
+    // 4. Bind Yjs to the Monaco Editor
+    const binding = new MonacoBinding(
+      ytext, 
+      editorRef.current.getModel(), 
+      new Set([editorRef.current]), 
+      provider.awareness
+    );
+    bindingRef.current = binding;
+
+    return () => {
+      // Cleanup bindings and provider on unmount securely
+      binding.destroy();
+      provider.destroy();
+      ydoc.destroy();
+    };
+  }, [editorReady, roomId]);
+
   return (
-    <div className="h-full w-full bg-[#0d0f14]">
+    <div className="h-full w-full bg-[#050505]">
       <Monaco
         height="100%"
         width="100%"
